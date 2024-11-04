@@ -125,9 +125,9 @@ flag_safe = true;
 %% BAYESIAN OPTIMIZATION ALGORITHM
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %loop over comparison methods:
-% j = 1: (P) proposed bound 
-% j = 2: (A) bound from Abbasi-Yadkori (2013), Theorem 3.11
-% j = 3: (F) bound from Fiedler et al. (2021), Proposition 2 
+% j = 1: proposed bound 
+% j = 2: bound from Abbasi-Yadkori (2013), Theorem 3.11
+% j = 3: bound from Fiedler et al. (2021), Proposition 2 
 for j = 1:3
     fprintf(repmat('\b',1,sum(nbytes)))
     nbytes(1) = fprintf('Method %d/%d; Monte Carlo iteration ', j, 3);
@@ -242,8 +242,8 @@ for j = 1:3
             %reset flag that indicates existence of safe action:
             flag_safe = true;
 
-            %save kernel & constraint data for one MC run (k==1) for (P) 
-            %and (A) (for learning progress plot, Figure 3 of paper):
+            %save kernel & constraint data for one MC run (k=1) for j=1 
+            %and j=2 (for learning progress plot, Figure 3 of paper):
             if((j==1 || j==2) && k==1)
                 if(i==1)
                     numgrid = 100;
@@ -310,9 +310,9 @@ end
 
 %labels for legend:
 leglab = cell(3,1);
-leglab{1} = '(P): Proposed method';
-leglab{2} = '(A): Abbasi-Yadkori (2013) Thm. 3.11';
-leglab{3} = '(F): Fiedler et al. (2021) Prop. 2';
+leglab{1} = 'Proposed method';
+leglab{2} = 'Abbasi-Yadkori (2013) Thm. 3.11';
+leglab{3} = 'Fiedler et al. (2021) Prop. 2';
 
 %regret:
 feval = results.f(results.xdata);
@@ -354,7 +354,7 @@ set(gcf,'units','normalized','outerposition',figpos)
 
 %Print cumulative regret relative to proposed method:
 cumregret_rel_final = (cumregret_mean(end,:)/cumregret_mean(end,1)-1)*100;
-disp(['Relative increase in mean cumulative regret wrt proposed method (P) at final time t = ', num2str(tend), ':'])
-disp(['(A):  ', num2str(cumregret_rel_final(2)), '%'])
-disp(['(F): ', num2str(cumregret_rel_final(3)), '%'])
+disp(['Relative increase in mean cumulative regret wrt proposed method at final time t = ', num2str(tend), ':'])
+disp(['Abbasi-Yadkori (2013) Thm. 3.11:  ', num2str(cumregret_rel_final(2)), '%'])
+disp(['Fiedler et al. (2021) Prop. 2:    ', num2str(cumregret_rel_final(3)), '%'])
 
