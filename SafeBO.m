@@ -20,6 +20,9 @@
 % OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 % SOFTWARE.
 
+% This script is an implementation of safe Bayesian optimization based on the Wiener
+% kernel error bound, and it corresponds to the numerical evaluation section of the
+% respective paper currently under submission. Preprint: https://arxiv.org/abs/2411.02253
 
 clear
 close all
