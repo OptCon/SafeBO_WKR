@@ -1,6 +1,6 @@
 % MIT License
 % 
-% Copyright (c) 2024 Oleksii Molodchyk, Johannes Teutsch, Timm Faulwasser
+% Copyright (c) 2025 Oleksii Molodchyk, Johannes Teutsch, Timm Faulwasser
 % 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -49,14 +49,14 @@ function plot_progress(f,kernel,x_max,x_min,f_min)
     plot(xgrid,meangrid_ker + sqrt(vargrid_wie),':g', 'LineWidth',1.2)
     yline(f_min,':k', 'LineWidth',1.1)
     plot(xdata,ydata,'mx','MarkerSize',8)
-    legend('True $f(x)$','Mean predictor $\mu(x)$', '$\mu(x) \pm \sigma_{GP}(x)$', '$\mu(x) \pm \sigma_{WK}(x)$', ...
-        '$f_{\min}$', 'Data points', 'AutoUpdate','off','Location','southeast', 'Interpreter', 'latex')
+    legend('True $g(x)$','Mean predictor $\mu(x)$', '$\mu(x) \pm \sigma_{GP}(x)$', '$\mu(x) \pm \sigma_{WK}(x)$', ...
+        '$g_{\min}$', 'Data points', 'AutoUpdate','off','Location','southeast', 'Interpreter', 'latex')
     plot(xgrid,meangrid_ker - sqrt(vargrid_wie),':g', 'LineWidth',1.2)
     plot(xgrid,meangrid_ker - sqrt(vargrid_ker),'-.b', 'LineWidth',1.2)
     xlim([x_min,x_max])
     ylim([-8,2])
     xlabel('Input $x$', 'Interpreter','latex')
-    ylabel('Output $y = f(x) + $ noise', 'Interpreter','latex')
+    ylabel('Output $y = g(x) + $ noise', 'Interpreter','latex')
     hold off
     grid on
 

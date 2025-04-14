@@ -1,6 +1,6 @@
 % MIT License
 % 
-% Copyright (c) 2024 Oleksii Molodchyk, Johannes Teutsch, Timm Faulwasser
+% Copyright (c) 2025 Oleksii Molodchyk, Johannes Teutsch, Timm Faulwasser
 % 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,9 @@
 
 % This script is an implementation of safe Bayesian optimization based on the Wiener
 % kernel error bound, and it corresponds to the numerical evaluation section of the
-% respective paper currently under submission. Preprint: https://arxiv.org/abs/2411.02253
+% respective paper (accepted for presentation and publication in the proceedings of 
+% the 2025 23rd European Control Conference (ECC)). 
+% Preprint: https://arxiv.org/abs/2411.02253
 
 clear
 close all
@@ -105,7 +107,7 @@ kernel_storage = cell(2,1);
 delta = 1e-3;
 
 %upper bound to RKHS norm of unknown function:
-B = 2.5;
+B = 3;
 
 %regularization for log-barrier function:
 tau = 1e-6;
@@ -202,48 +204,27 @@ for j = 1:3
             xopt0 = x0grid(idx0(1));
 
             
-            if(flag_safe)
-                %if safe initial state exists, solve safe BO problem:
-                %(negative objective for maximization)
-                [xopt, ~, ef] = fmincon(@(x) -acquisitionFun(x) - tau*log(constraintFun(x)), xopt0,[],[],[],[],x_min,x_max,[],options);    
-            else
-                %safe fallback strategy:
-                xopt = xsafe;
-            end
-
-        
-            %apply action:
-            xdata_seq(i,k,j) = xopt;
-            ydata_seq(i,k,j) = f(xopt) + noise(k,i);
-            
-            %update kernel object:
-            kernel = kernel.addData(xdata_seq(i,k,j),ydata_seq(i,k,j));
-        
             %find safe region:
-            if(tau>0)
-                idxs = find(diff(mask)); %find changes in the safety indicator mask
-                if(length(idxs)<2) %less than 2 changes found
-                    if(mask(1) && ~mask(end)) %x_min is part of the safe set
-                        idxs = [1,idxs];
-                    elseif(~mask(1) && mask(end)) %x_max is part of the safe set
-                        idxs = [idxs,length(mask)];
-                    else %the full domain is safe
-                        idxs = [1,length(mask)];
-                    end
+            idxs = find(diff(mask)); %find changes in the safety indicator mask
+            if(length(idxs)<2) %less than 2 changes found
+                if(mask(1) && ~mask(end)) %x_min is part of the safe set
+                    idxs = [1,idxs];
+                elseif(~mask(1) && mask(end)) %x_max is part of the safe set
+                    idxs = [idxs,length(mask)];
+                else %the full domain is safe
+                    idxs = [1,length(mask)];
                 end
-                %determine boundary of safe region:
-                xsafe_min(i,k,j) = max( [min([fzero(@(x) constraintFun(x),x0grid(idxs(1)),options0), xsafe]), x_min]);
-                xsafe_max(i,k,j) = min( [max([fzero(@(x) constraintFun(x),x0grid(idxs(2)),options0), xsafe]), x_max]);
             end
-    
+            %determine boundary of safe region:
+            xsafe_min(i,k,j) = max( [min([fzero(@(x) constraintFun(x),x0grid(idxs(1)),options0), xsafe]), x_min]);
+            xsafe_max(i,k,j) = min( [max([fzero(@(x) constraintFun(x),x0grid(idxs(2)),options0), xsafe]), x_max]);
+            
+
             %plot learning progress
             if(flag_plot)
                 plot_progress(f, kernel, x_max, x_min, f_min)
                 pause(0.1)
             end
-
-            %reset flag that indicates existence of safe action:
-            flag_safe = true;
 
             %save kernel & constraint data for one MC run (k=1) for j=1 
             %and j=2 (for learning progress plot, Figure 3 of paper):
@@ -256,13 +237,36 @@ for j = 1:3
                 kernel_storage{j}.vargrid_ker(:,i) = kernel.var_ker(xgrid)';
                 kernel_storage{j}.vargrid_wie(:,i) = kernel.var_wie(xgrid)';
                 kernel_storage{j}.meangrid_ker(:,i) = kernel.mean_ker(xgrid)';
-                kernel_storage{j}.barrgrid(:,i) = constraintFun(xgrid)';
+                kernel_storage{j}.ucb(:,i) = kernel_storage{j}.meangrid_ker(:,i) + eta(xgrid)';
+                kernel_storage{j}.lcb(:,i) = kernel_storage{j}.meangrid_ker(:,i) - eta(xgrid)';
+                kernel_storage{j}.xsafe_max(i) = xsafe_max(i,1,j);
+                kernel_storage{j}.xsafe_min(i) = xsafe_min(i,1,j);
                 if(i==num_steps)
                     kernel_storage{j}.xdata = kernel.xdata';
                     kernel_storage{j}.ydata = kernel.ydata';
                 end
             end
+
+
+            if(flag_safe)
+                %if safe initial state exists, solve safe BO problem:
+                %(negative objective for maximization)
+                [xopt, ~, ef] = fmincon(@(x) -acquisitionFun(x), xopt0,[],[],[],[],x_min,x_max,@(x) deal(-constraintFun(x),[]),options);    
+            else
+                %safe fallback strategy:
+                xopt = xsafe;
+            end
+
+            %reset flag that indicates existence of safe action:
+            flag_safe = true;
         
+            %apply action:
+            xdata_seq(i,k,j) = xopt;
+            ydata_seq(i,k,j) = f(xopt) + noise(k,i);
+            
+            %update kernel object:
+            kernel = kernel.addData(xdata_seq(i,k,j),ydata_seq(i,k,j));        
+
         end
     end
 end
@@ -341,7 +345,7 @@ t = (1:tend)';
 %plot regret:
 subplot(2,1,1)
 plot_results(t,cumregret_mean,cumregret_conf_max,cumregret_conf_min,leglab)
-ylabel('Regret $\sum_{i=1}^{t} ( f(x_{\mathrm{opt}}) - f(x_i) )$', 'Interpreter','latex')
+ylabel('Regret $\sum_{i=1}^{t} ( g(x_{\mathrm{opt}}) - g(x_i) )$', 'Interpreter','latex')
 xlabel('Learning iterations t', 'Interpreter','latex')
 
 %plot size of safe region:

@@ -1,6 +1,6 @@
 % MIT License
 % 
-% Copyright (c) 2024 Oleksii Molodchyk, Johannes Teutsch, Timm Faulwasser
+% Copyright (c) 2025 Oleksii Molodchyk, Johannes Teutsch, Timm Faulwasser
 % 
 % Permission is hereby granted, free of charge, to any person obtaining a copy
 % of this software and associated documentation files (the "Software"), to deal
